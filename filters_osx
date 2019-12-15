@@ -1,0 +1,47 @@
+# Exclude any cache files/directories with cache in the name (case insensitive)
+e:(?i).*cache.*
+
+# Exclude temporary file names
+e:.*/?~.*$
+
+# Misc
+e:(?i)\.Trash/.*$
+e:(?i).*$RECYCLE.BIN/
+e:(?i)\.dropbox/.*$
+e:(?i).*\.rnd$
+e:(?i).*/Google/Chrome/.*cache.*
+e:(?i).*/Google/Chrome/Safe Browsing.*
+e:(?i).*/Mozilla/Firefox/.*cache.*
+
+# Libraries
+e:(?i)iTunes/Album Artwork/Cache/
+e:(?i)Library/Application Support/Adobe/Acrobat/DC/Acrobat/Synchronizer/(Commands|Notification)$
+e:(?i)Library/Application Support/AvastHUB/run/
+e:(?i)Library/Application Support/SyncServices/
+e:(?i)Library/Caches/
+e:(?i)Library/Containers/
+e:(?i)Library/Google/GoogleSoftwareUpdate/Stats/
+e:(?i)Library/Group Containers/
+e:(?i)Library/Logs/
+e:(?i)Library/Mail/AvailableFeeds/
+e:(?i)Library/Mail/Envelope Index/
+e:(?i)Library/Mirrors/
+e:(?i)Library/Mobile Documents/*
+e:(?i)Library/PubSub/Database/
+e:(?i)Library/PubSub/Downloads/
+e:(?i)Library/PubSub/Feeds/
+e:(?i)Library/Safari/HistoryIndex.sk
+e:(?i)Library/Safari/Icons.db
+e:(?i)Library/Safari/WebpageIcons.db
+e:(?i)Library/Saved Application State/
+
+# Dev
+e:(?i).*\.sock$
+e:(?i)/\.bundle/
+e:(?i)/\.rvm/
+e:(?i)/\.serverless/
+e:(?i)/\.terraform/
+e:(?i)/node_modules/
+e:(?i)\.(git|svn|hg)/.*$
+e:(?i)\.gnupg/S\..*$
+e:(?i)\.sqlite-.*$

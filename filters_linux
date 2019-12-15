@@ -1,0 +1,21 @@
+# Exclude any cache files/directories with cache in the name (case insensitive)
+e:(?i).*cache.*
+
+# exclude temporary file names
+e:.*/?~.*$
+
+# Misc
+e:(?i)\.Trash/.*$
+e:(?i)\.dropbox/.*$
+e:(?i).*\.rnd$
+
+# Dev
+e:(?i).*\.sock$
+e:(?i)/\.bundle/
+e:(?i)/\.rvm/
+e:(?i)/\.serverless/
+e:(?i)/\.terraform/
+e:(?i)/node_modules/
+e:(?i)\.(git|svn|hg)/.*$
+e:(?i)\.gnupg/S\..*$
+e:(?i)\.sqlite-.*$

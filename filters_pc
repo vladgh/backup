@@ -1,0 +1,222 @@
+# From https://github.com/mattjm/duplicacy-script
+e:.*\$RECYCLE\.BIN/.*
+e:.*/System\sVolume\sInformation/.*
+e:.*/RECYCLER/.*
+e:.*/I386.*
+e:.*/pagefile.sys
+e:.*/MSOCache.*
+e:.*UsrClass\.dat\.LOG
+e:.*UsrClass\.dat
+e:.*/Temporary\sInternet\sFiles/.*
+e:(?i).*ntuser.dat.*
+e:.*Local\sSettings/Temp.*
+e:.*AppData/Local/Temp.*
+e:.*AppData/Temp.*
+e:.*/Windows/Temp.*
+e:(?i).*/Microsoft.*/Windows/.*\.log
+e:.*/Microsoft.*/Windows/Cookies.*
+e:.*/Microsoft.*/RecoveryStore.*
+e:(?i).:/Config\\.Msi.*
+e:(?i).*\\.rbf
+e:.*/Windows/Installer.*
+e:.*/Application\sData/Application\sData.*
+e:(?i).:/Config\.Msi.*
+e:(?i).*\.rbf
+e:(?i).*/Microsoft.*/Windows/.*\.edb
+e:(?i).*/Google/Chrome/User\sData/Default/Cookies(-journal)?", "(?i).*/Safari/Library/Caches/.*
+e:.*\.tmp
+e:.*\.tmp/.*
+e:.*\.part
+e:.*/iPhoto Library/iPod\sPhoto\sCache/.*
+e:.*/Music/Subscription/.*
+e:(?i).*/Google/Chrome/.*cache.*
+e:(?i).*/Mozilla/Firefox/.*cache.*
+e:.*/Google/Chrome/Safe\sBrowsing.*
+e:.*/Google/Chrome/User\sData/Default/File\sSystem.*
+e:.*/Google/Chrome/User\sData/Default/IndexedDB.*
+e:.*/Google/Chrome/User\sData/Default/Local\sStorage.*
+e:.*/Google/Chrome/User\sData/Safe\sBrowsing.*
+e:.*/(cookies|permissions).sqllite(-.{3})?
+e:.*Downloads
+e:.*AppData/Local/Akamai.*
+e:.*AppData/Roaming/Amazon\sCloud\sDrive.*
+e:.*Dashlane/.*
+e:.*Spotify/.*
+e:.*AppData/Local/Packages.*
+e:.*AppData/Roaming/Slack.*
+e:.*go/.*
+e:.*backup_logs/duplicacy.log
+
+# From on https://github.com/TheBestPessimist/duplicacy-utils
+
+# .VCS subfolder
+e:(?i)(^|/)\.git/
+e:(?i)(^|/)\.hg/
+e:(?i)(^|/)\.svn/
+
+# temp/cache files/folders everywhere
+e:(?i)\.(tmp|temp)$
+e:(?i)(^|/)temp/
+e:(?i)(^|/)tmp/
+e:(?i)(^|/)cache/
+e:(?i)/Package Cache/
+
+# npm/node related
+e:(?i)/compile-cache/
+e:(?i)/node_modules/
+e:(?i)/npm-cache/
+
+# Google Drive Cache
+e:(?i)/\.tmp\.drivedownload/
+
+# Onedrive Cache
+e:(?i)/OneDriveTemp/
+e:(?i)/OneDrive(.*)?/\..*-.*-.*-.*-.*$
+
+# Dropbox Cache
+e:(?i)/\.dropbox\.cache/
+
+# system files anywhere
+e:(?i)ntuser\.dat
+e:(?i)(^|/)thumbs\.db$
+e:(?i)(^|/)IconCache\.db
+
+# unneeded folders in Users profiles: systems, junctions
+e:(?i)^[^/]+/Users/[^/]+/\.oracle_jre_usage/
+e:(?i)^[^/]+/Users/[^/]+/Application Data
+e:(?i)^[^/]+/Users/[^/]+/Cookies
+e:(?i)^[^/]+/Users/[^/]+/IntelGraphicsProfiles
+e:(?i)^[^/]+/Users/[^/]+/Local Settings
+e:(?i)^[^/]+/Users/[^/]+/MicrosoftEdgeBackups/
+e:(?i)^[^/]+/Users/[^/]+/NetHood
+e:(?i)^[^/]+/Users/[^/]+/PrintHood
+e:(?i)^[^/]+/Users/[^/]+/Recent
+e:(?i)^[^/]+/Users/[^/]+/Searches/
+e:(?i)^[^/]+/Users/[^/]+/SendTo
+e:(?i)^[^/]+/Users/[^/]+/Start Menu
+e:(?i)^[^/]+/Users/[^/]+/Templates
+e:(?i)^[^/]+/Users/[^/]+/Tracing/
+
+# unneeded folders in Users profiles: runtimes, dev, others
+e:(?i)^[^/]+/Users/[^/]+/\.?anaconda/
+e:(?i)^[^/]+/Users/[^/]+/\.?android[^/]*/
+e:(?i)^[^/]+/Users/[^/]+/\.?astropy/
+e:(?i)^[^/]+/Users/[^/]+/\.?conda/
+e:(?i)^[^/]+/Users/[^/]+/\.?dia/
+e:(?i)^[^/]+/Users/[^/]+/\.?eclipse/
+e:(?i)^[^/]+/Users/[^/]+/\.?gradle/
+e:(?i)^[^/]+/Users/[^/]+/\.?kivy/
+e:(?i)^[^/]+/Users/[^/]+/\.?matplotlib/
+e:(?i)^[^/]+/Users/[^/]+/\.?Mendeley Desktop/
+e:(?i)^[^/]+/Users/[^/]+/\.?p2/
+e:(?i)^[^/]+/Users/[^/]+/\.?pgadmin./
+e:(?i)^[^/]+/Users/[^/]+/\.?QtWeb/
+
+# Global excludes
+# useless files anywhere, by extension
+e:(?i).*.msf*$
+e:(?i)\.bac$
+e:(?i)\.back$
+e:(?i)\.bak$
+e:(?i)\.bkp$
+e:(?i)\.obj$
+e:(?i)\.old$
+e:(?i)\.part$
+e:(?i)\.!ut$
+e:(?i)\.bup$
+e:(?i)\.cache$
+e:(?i)\.crdownload$
+e:(?i)\.dmp$
+e:(?i)\.dov$
+e:(?i)\.dump$
+e:(?i)\.err$
+e:(?i)\.ffs_lock$
+e:(?i)\.ffs_tmp$
+e:(?i)\.lck$
+e:(?i)\.prv$
+e:(?i)\.rbf$
+
+# AppData folders with known useless-but-heavy content
+## C:/Users/<username>/AppData/ holds app's configurations specific for each user
+e:(?i)/AppData/LocalLow/
+e:(?i)/AppData/[^/]+/Acronis/
+e:(?i)/AppData/[^/]+/Adobe/
+e:(?i)/AppData/[^/]+/Atlassian/SourceTree/[^/]*local/
+e:(?i)/AppData/[^/]+/Comms/
+e:(?i)/AppData/[^/]+/Code/CachedData/
+e:(?i)/AppData/[^/]+/ConnectedDevicesPlatform/
+e:(?i)/AppData/[^/]+/CrashDumps/
+e:(?i)/AppData/[^/]+/CrashPlan/
+e:(?i)/AppData/[^/]+/DBG/
+e:(?i)/AppData/[^/]+/Diagnostics/
+e:(?i)/AppData/[^/]+/Downloaded Installations/
+e:(?i)/AppData/[^/]+/Dropbox/
+e:(?i)/AppData/[^/]+/Duplicati/
+e:(?i)/AppData/[^/]+/ElevatedDiagnostics/
+e:(?i)/AppData/[^/]+/JetBrains/
+e:(?i)/AppData/[^/]+/npm/
+e:(?i)/AppData/[^/]+/NVIDIA[^/]*/
+e:(?i)/AppData/[^/]+/Oracle/
+e:(?i)/AppData/[^/]+/PackageStaging/
+e:(?i)/AppData/[^/]+/PeerDistRepub/
+e:(?i)/AppData/[^/]+/Publishers/
+e:(?i)/AppData/[^/]+/Sun/
+e:(?i)/AppData/[^/]+/TileDataLayer/
+e:(?i)/AppData/[^/]+/Veeam/
+e:(?i)/AppData/[^/]+/VirtualStore/
+e:(?i)/AppData/[^/]+/[^/]+/GPUCache/
+## C:/ProgramData/ holds app's configurations global to all users (every time you select "Install to all users")
+e:(?i)^[^/]+/ProgramData/Acronis/
+e:(?i)^[^/]+/ProgramData/Adobe/
+e:(?i)^[^/]+/ProgramData/Apple/Installer Cache/
+e:(?i)^[^/]+/ProgramData/AVAST[^/]*/
+e:(?i)^[^/]+/ProgramData/CrashPlan/
+e:(?i)^[^/]+/ProgramData/Dell/drivers
+e:(?i)^[^/]+/ProgramData/Dropbox/
+e:(?i)^[^/]+/ProgramData/Duplicati/
+e:(?i)^[^/]+/ProgramData/Epson/
+e:(?i)^[^/]+/ProgramData/Eset/
+e:(?i)^[^/]+/ProgramData/GetSupportService/
+e:(?i)^[^/]+/ProgramData/Hp/
+e:(?i)^[^/]+/ProgramData/Intel[^/]*/
+e:(?i)^[^/]+/ProgramData/Malwarebytes/
+e:(?i)^[^/]+/ProgramData/Microsoft[^/]*/
+e:(?i)^[^/]+/ProgramData/MiKTeX/
+e:(?i)^[^/]+/ProgramData/Mozilla/
+e:(?i)^[^/]+/ProgramData/NVIDIA[^/]*/
+e:(?i)^[^/]+/ProgramData/Oracle/
+e:(?i)^[^/]+/ProgramData/Packages/
+e:(?i)^[^/]+/ProgramData/Skype/
+e:(?i)^[^/]+/ProgramData/SoftwareDistribution/
+e:(?i)^[^/]+/ProgramData/Soluto/
+e:(?i)^[^/]+/ProgramData/SteelSeries/
+e:(?i)^[^/]+/ProgramData/SupremoRemoteDesktop/
+e:(?i)^[^/]+/ProgramData/SystemAcCrux/
+e:(?i)^[^/]+/ProgramData/USOPrivate/
+e:(?i)^[^/]+/ProgramData/USOShared/
+e:(?i)^[^/]+/ProgramData/Veeam/
+e:(?i)^[^/]+/ProgramData/WindowsHolographicDevices/
+
+# Include microsoft email clients but nothing else from microsoft
+# There is an error with .nst/.ost files so these need to be excluded first
+# ERROR CHUNK_MAKER Failed to read 0 bytes: read C:\duplicacy/.duplicacy\shadow\\duplicacy/vlad/AppData/Local/Microsoft/Outlook/xxx@yyy.edu - zzz.nst: The process cannot access the file because another process has locked a portion of the file.
+e:(?i)/AppData/[^/]+/Microsoft/Outlook/.*\.(n|o)st$
+i:(?i)/AppData/[^/]+/Microsoft/$
+i:(?i)/AppData/[^/]+/Microsoft/(Outlook|Windows Mail|Windows Live Mail)/
+e:(?i)/AppData/[^/]+/Microsoft[^/]*/
+
+# Include Firefox profiles but nothing else from Mozilla
+# note that we include the whole profile, because we are unsure how many "users" are added beside the "Default" profile
+i:(?i)/AppData/[^/]+/Mozilla/$
+i:(?i)/AppData/[^/]+/Mozilla/Firefox/
+e:(?i)/AppData/[^/]+/Mozilla/
+
+# Include Chrome profile and Picasa data, but nothing else from Google
+# note that we include the whole profile, because we are unsure how many "users" are added beside the "Default" profile
+i:(?i)/AppData/[^/]+/Google/$
+i:(?i)/AppData/[^/]+/Google/Chrome/$
+e:(?i)/AppData/[^/]+/Google/Chrome/.*Safe Browsing
+e:(?i)/AppData/[^/]+/Google/Chrome/User Data/Default/Current.*
+i:(?i)/AppData/[^/]+/Google/Chrome/User Data/
+i:(?i)/AppData/[^/]+/Google/Picasa[^/]*/
+e:(?i)/AppData/[^/]+/Google/
