@@ -100,6 +100,26 @@ Manually trigger scheduled task
 Start-ScheduledTask -TaskName "DuplicacyBackup"
 ```
 
+## VBackup Script Linux
+
+Download the OSX/Linux backup script `vbackup.sh`, add it to PATH and make it executable
+
+```sh
+sudo wget -O /usr/local/bin/vbackup.sh https://github.com/vladgh/backup/raw/master/vbackup.sh
+sudo chmod +x /usr/local/bin/vbackup.sh
+```
+
+Create a cronjob to run the script as your user, at some interval
+
+```sh
+sudo tee /etc/cron.d/vbackup << CONFIG
+DUPLICACY_REPOSITORY_PATH='/home/vlad'
+SLACK_ALERTS_WEBHOOK='https://hooks.slack.com/services/xxxxxxxxxx'
+10 * * * * vlad /usr/local/bin/vbackup.sh >/dev/null 2>&1
+CONFIG
+sudo chmod 600 /etc/cron.d/vbackup
+```
+
 ---
 
 ## Recovery
