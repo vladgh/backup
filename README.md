@@ -89,7 +89,7 @@ launchctl unload -w ~/Library/LaunchAgents/duplicacy.plist && launchctl load -w 
 Download the Windows backup script `vbackup.ps1`
 
 ```powershell
-Invoke-WebRequest -Uri "https://github.com/vladgh/backup/raw/master/vbackup.ps1" -OutFile "C:\backup\.duplicacy\vbackup.ps1"
+Invoke-WebRequest -Uri "https://github.com/vladgh/backup/raw/master/vbackup.ps1" -OutFile "C:\backup\vbackup.ps1"
 ```
 
 Download the sample duplicacy.xml and import it into the Task Scheduler to run the powershell script at some interval with elevated privileges. Modify as needed!
