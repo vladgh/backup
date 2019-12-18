@@ -112,7 +112,8 @@ prune_backups(){
   # Keep snapshots for 5 years, monlthy for 6 months, weekly for a month, and daily for a week
   duplicacy -log prune -all -keep 0:1825 -keep 30:180 -keep 7:30 -keep 1:7
   if [[ -n "$DUPLICACY_EXTRA_STORAGE" ]]; then
-    duplicacy -log prune -all -keep 0:1825 -keep 30:180 -keep 7:30 -keep 1:7 -storage "$DUPLICACY_EXTRA_STORAGE"
+    duplicacy -log prune -all -keep 0:1825 -keep 30:180 -keep 7:30 -keep 1:7 -storage "$DUPLICACY_EXTRA_STORAGE"; then
+    log INFO 'Finished pruning snapshots'
   fi
 }
 
@@ -121,7 +122,8 @@ clone_snapshots(){
 
   cd "$DUPLICACY_REPOSITORY_PATH" || exit 1
   if [[ -n "$DUPLICACY_EXTRA_STORAGE" ]]; then
-    duplicacy -log copy -to "$DUPLICACY_EXTRA_STORAGE" -threads "$DUPLICACY_THREADS"
+    duplicacy -log copy -to "$DUPLICACY_EXTRA_STORAGE" -threads "$DUPLICACY_THREADS"; then
+    log INFO 'Finished copying snapshots'
   fi
 }
 
