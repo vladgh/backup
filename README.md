@@ -58,7 +58,7 @@ Invoke-WebRequest -Uri "https://github.com/vladgh/backup/raw/master/filters_pc" 
 ## Backup
 
 ```sh
-duplicacy backup -log -stats -vss
+duplicacy -log backup -stats -vss
 ```
 
 ## VBackup Script OSX
@@ -140,7 +140,7 @@ duplicacy init -encrypt MyID sftp://user@192.168.1.2//path/to/backup/storage
 Restore the wanted path from the wanted revision
 
 ```sh
-duplicacy restore -r 604 -log -stats -- 'Dropbox/Projects/*'
+duplicacy -log restore -r 604-stats -- 'Dropbox/Projects/*'
 ```
 
 Look for files, use the list command and grep
