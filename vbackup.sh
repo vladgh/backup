@@ -119,15 +119,15 @@ prune_backups(){
 clone_snapshots(){
   if [[ "$DUPLICACY_CLONE_BACKUPS" != 'true' ]]; then return; fi
 
-  cd "$DUPLICACY_REPOSITORY_PATH" || exit 1
   if [[ -n "$DUPLICACY_EXTRA_STORAGE" ]]; then
+    cd "$DUPLICACY_REPOSITORY_PATH" || exit 1
     duplicacy -log copy -to "$DUPLICACY_EXTRA_STORAGE" -threads "$DUPLICACY_THREADS"
     log INFO 'Finished copying snapshots'
   fi
 }
 
 # Clean-up and notify
-script_exit() {
+clean_up() {
   if [[ -s "$DUPLICACY_PID_FILE" ]] && [[ ${1:-0} != 3 ]]; then
     rm -f "$DUPLICACY_PID_FILE"
   fi
@@ -138,7 +138,7 @@ script_exit() {
 
 # Script
 main(){
-  trap 'script_exit $?' EXIT HUP INT QUIT TERM
+  trap 'clean_up $?' EXIT HUP INT QUIT TERM
 
   # Ensure that the repository is initialized
   if [[ ! -s "${DUPLICACY_REPOSITORY_PATH}/.duplicacy/preferences" ]]; then
