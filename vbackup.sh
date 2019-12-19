@@ -7,8 +7,6 @@ IFS=$'\n\t'
 # DEFAULTS
 # The path to the source files
 export DUPLICACY_REPOSITORY_PATH="${DUPLICACY_REPOSITORY_PATH:-$HOME}"
-# The path to the .env file, which contains environment variables that will be loaded by this scripts
-export DUPLICACY_ENV_FILE="${DUPLICACY_ENV_FILE:-${DUPLICACY_REPOSITORY_PATH}/.duplicacy/.env}"
 # The path to the log file for this script
 export DUPLICACY_LOG_FILE="${DUPLICACY_LOG_FILE:-${DUPLICACY_REPOSITORY_PATH}/.duplicacy/logs/backup.log}"
 # The path to the file containing the pid of the running process
