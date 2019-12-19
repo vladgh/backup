@@ -41,7 +41,8 @@ log(){
 # Post message to Slack webhook
 notify(){
   if [[ -n "$SLACK_ALERTS_WEBHOOK" ]]; then
-    /usr/bin/curl -s -X POST -H 'Content-type: application/json' \
+    /usr/bin/curl --silent --output /dev/null --show-error --fail --request POST \
+      --header 'Content-type: application/json' \
       --data "{\"text\":\"${1:?Must specify the message}\"}" \
       "$SLACK_ALERTS_WEBHOOK"
   fi
