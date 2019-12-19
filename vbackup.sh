@@ -7,7 +7,9 @@ IFS=$'\n\t'
 # DEFAULTS
 # The path to the source files
 export DUPLICACY_REPOSITORY_PATH="${DUPLICACY_REPOSITORY_PATH:-$HOME}"
-# The path to the log file
+# The path to the .env file, which contains environment variables that will be loaded by this scripts
+export DUPLICACY_ENV_FILE="${DUPLICACY_ENV_FILE:-${DUPLICACY_REPOSITORY_PATH}/.duplicacy/.env}"
+# The path to the log file for this script
 export DUPLICACY_LOG_FILE="${DUPLICACY_LOG_FILE:-${DUPLICACY_REPOSITORY_PATH}/.duplicacy/logs/backup.log}"
 # The path to the file containing the pid of the running process
 export DUPLICACY_PID_FILE="${DUPLICACY_PID_FILE:-${DUPLICACY_REPOSITORY_PATH}/.duplicacy/running.pid}"
@@ -29,10 +31,6 @@ export DUPLICACY_PRUNE_BACKUPS="${DUPLICACY_PRUNE_BACKUPS:-false}"
 export SLACK_ALERTS_WEBHOOK="${SLACK_ALERTS_WEBHOOK:-}"
 # Export PATH if needed by scripts that do not load the entire environment
 export PATH="${PATH}:/bin:/sbin:/usr/bin:/usr/local/bin:/usr/local/opt/coreutils/libexec/gnubin"
-
-# Log everything to file
-mkdir -p "$(dirname "$DUPLICACY_LOG_FILE")"
-exec > >(tee -a "$DUPLICACY_LOG_FILE") 2>&1
 
 # Log format (ex: log INFO Message)
 log(){
@@ -140,6 +138,22 @@ script_exit() {
 # Script
 main(){
   trap 'script_exit $?' EXIT HUP INT QUIT TERM
+
+  # Ensure that the repository is initialized
+  if [[ -s "${DUPLICACY_REPOSITORY_PATH}/.duplicacy/preferences" ]]; then
+    log ERROR 'The repository is not initialized'; exit 1
+  fi
+
+  # Load environment variables
+  # shellcheck disable=1090
+  if [[ -s "$DUPLICACY_ENV_FILE" ]]; then
+    log INFO 'Loading environment variables'
+    . "$DUPLICACY_ENV_FILE"
+  fi
+
+  # Log everything to file
+  mkdir -p "$(dirname "$DUPLICACY_LOG_FILE")"
+  exec > >(tee -a "$DUPLICACY_LOG_FILE") 2>&1
 
   # Sanity checks
   check_process_running
