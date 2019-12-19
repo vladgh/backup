@@ -140,7 +140,7 @@ main(){
   trap 'script_exit $?' EXIT HUP INT QUIT TERM
 
   # Ensure that the repository is initialized
-  if [[ -s "${DUPLICACY_REPOSITORY_PATH}/.duplicacy/preferences" ]]; then
+  if [[ ! -s "${DUPLICACY_REPOSITORY_PATH}/.duplicacy/preferences" ]]; then
     log ERROR 'The repository is not initialized'; exit 1
   fi
 
