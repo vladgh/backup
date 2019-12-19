@@ -144,13 +144,6 @@ main(){
     log ERROR 'The repository is not initialized'; exit 1
   fi
 
-  # Load environment variables
-  # shellcheck disable=1090
-  if [[ -s "$DUPLICACY_ENV_FILE" ]]; then
-    log INFO 'Loading environment variables'
-    . "$DUPLICACY_ENV_FILE"
-  fi
-
   # Log everything to file
   mkdir -p "$(dirname "$DUPLICACY_LOG_FILE")"
   exec > >(tee -a "$DUPLICACY_LOG_FILE") 2>&1
