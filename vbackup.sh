@@ -129,7 +129,7 @@ clean_up() {
   if [[ -s "$DUPLICACY_PID_FILE" ]] && [[ ${1:-0} != 3 ]]; then
     rm -f "$DUPLICACY_PID_FILE"
   fi
-  if [[ ${1:-0} != 0 ]]; then
+  if [[ ${1:-0} != 0 ]] && [[ ${1:-0} != 3 ]]; then
     notify "Backup Failed on $(hostname) ($(date))"
   fi
 }
