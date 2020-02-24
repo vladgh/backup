@@ -7,6 +7,8 @@ IFS=$'\n\t'
 # DEFAULTS
 # The path to the source files
 export DUPLICACY_REPOSITORY_PATH="${DUPLICACY_REPOSITORY_PATH:-$HOME}"
+# The path to the dotenv file for this script
+export DUPLICACY_ENV_FILE="${DUPLICACY_ENV_FILE:-${DUPLICACY_REPOSITORY_PATH}/.duplicacy/.env}"
 # The path to the log file for this script
 export DUPLICACY_LOG_FILE="${DUPLICACY_LOG_FILE:-${DUPLICACY_REPOSITORY_PATH}/.duplicacy/logs/backup.log}"
 # The path to the file containing the pid of the running process
@@ -27,6 +29,8 @@ export DUPLICACY_CLONE_BACKUPS="${DUPLICACY_CLONE_BACKUPS:-false}"
 export DUPLICACY_PRUNE_BACKUPS="${DUPLICACY_PRUNE_BACKUPS:-false}"
 # The Slack webhook used for posting messages
 export SLACK_ALERTS_WEBHOOK="${SLACK_ALERTS_WEBHOOK:-}"
+# The webhook used for healthchecks (HealthChecks.io)
+export HEALTHCHECKS_URL="${HEALTHCHECKS_URL:-}"
 # Export PATH if needed by scripts that do not load the entire environment
 export PATH="${PATH}:/bin:/sbin:/usr/bin:/usr/local/bin:/usr/local/opt/coreutils/libexec/gnubin"
 
@@ -34,6 +38,11 @@ export PATH="${PATH}:/bin:/sbin:/usr/bin:/usr/local/bin:/usr/local/opt/coreutils
 log(){
   local type=${1:?Must specify the type first}; shift
   echo "$(date '+%Y-%m-%d %H:%M:%S.%3N') ${type} DUPLICACY_SCRIPT ${*:-}"
+}
+
+# Check if command exists
+is_cmd(){
+  command -v "$@" >/dev/null 2>&1
 }
 
 # Post message to Slack webhook
@@ -66,10 +75,12 @@ check_process_running(){
 
 # Execute the script only when connected to the specified Wi-Fi SSID
 check_ssid(){
-  if [[ -n "$DUPLICACY_SSID" ]] && \
-     [[ -x /System/Library/PrivateFrameworks/Apple80211.framework/Resources/airport ]] && \
-     [[ "$(/System/Library/PrivateFrameworks/Apple80211.framework/Resources/airport -I | awk -F': ' '/ SSID/{print $2}')" != "$DUPLICACY_SSID" ]]
-  then
+  if [[ -z "$DUPLICACY_SSID" ]]; then return; fi
+  if [[ ! -x /System/Library/PrivateFrameworks/Apple80211.framework/Resources/airport ]]; then return; fi
+
+  if [[ "$(/System/Library/PrivateFrameworks/Apple80211.framework/Resources/airport -I | awk -F': ' '/AirPort/{print $2}')" == 'Off' ]]; then
+    log INFO 'The backup will be skipped because Wi-Fi is Off (probably sleeping)'; exit 2
+  elif [[ "$(/System/Library/PrivateFrameworks/Apple80211.framework/Resources/airport -I | awk -F': ' '/ SSID/{print $2}')" != "$DUPLICACY_SSID" ]]; then
     log INFO 'The backup will be skipped for the current Wi-Fi SSID'; exit 2
   fi
 }
@@ -77,13 +88,10 @@ check_ssid(){
 # This is here because of tmutil timeout errors (`tmutil localsnaphost` is
 # used for VSS - Shadow Copy)
 wait_for_tmutil(){
-  if [[ "$DUPLICACY_VSS" == 'false' ]]; then return; fi
+  if ! is_cmd tmutil; then return; fi
 
-  if ! command -v tmutil >/dev/null 2>&1 ; then return; fi
-
-  log INFO 'Waiting for tmutil...'
   until tmutil listlocalsnapshots / >/dev/null 2>&1 || [[ $((DUPLICACY_TIMEOUT--)) == 0 ]]; do
-    sleep 1
+    log INFO 'Waiting for tmutil...'; sleep 5
   done
 
   if ! tmutil listlocalsnapshots / >/dev/null 2>&1; then
@@ -91,75 +99,104 @@ wait_for_tmutil(){
   fi
 }
 
-# Run backup
+# Run backup (use caffeinate command if it exists to prevent sleeping on MacOS)
 do_backup(){
   cd "$DUPLICACY_REPOSITORY_PATH" || exit 1
-  if [[ "$DUPLICACY_VSS" == 'true' ]]; then
-    duplicacy -log backup -stats -vss
+  if is_cmd caffeinate; then
+    caffeinate -s duplicacy -log backup -stats -vss
   else
     duplicacy -log backup -stats
   fi
 }
 
+# Prune backups
 prune_backups(){
-  if [[ "$DUPLICACY_PRUNE_BACKUPS" != 'true' ]]; then return; fi
-
   cd "$DUPLICACY_REPOSITORY_PATH" || exit 1
   # -keep <n:m> [+]   keep 1 snapshot every n days for snapshots older than m days
-  # Keep snapshots for 5 years, monlthy for 6 months, weekly for a month, and daily for a week
+  # Keep no snapshots older than 1825 days
+  # Keep 1 snapshot every 30 days if older than 180 days
+  # Keep 1 snapshot every 7 days if older than 30 days
+  # Keep 1 snapshot every 1 day if older than 7 days
   duplicacy -log prune -all -keep 0:1825 -keep 30:180 -keep 7:30 -keep 1:7
-  if [[ -n "$DUPLICACY_EXTRA_STORAGE" ]]; then
-    duplicacy -log prune -all -keep 0:1825 -keep 30:180 -keep 7:30 -keep 1:7 -storage "$DUPLICACY_EXTRA_STORAGE"
-  fi
-  log INFO 'Finished pruning snapshots'
+  log INFO 'Finished pruning local snapshots'
+  duplicacy -log prune -all -keep 0:1825 -keep 30:180 -keep 7:30 -keep 1:7 -storage B2
+  log INFO 'Finished pruning remote snapshots'
 }
 
+# Clone snapshots
 clone_snapshots(){
-  if [[ "$DUPLICACY_CLONE_BACKUPS" != 'true' ]]; then return; fi
+  cd "$DUPLICACY_REPOSITORY_PATH" || exit 1
+  duplicacy -log copy -to B2 -threads 4
+  log INFO 'Finished copying snapshots'
+}
 
-  if [[ -n "$DUPLICACY_EXTRA_STORAGE" ]]; then
-    cd "$DUPLICACY_REPOSITORY_PATH" || exit 1
-    duplicacy -log copy -to "$DUPLICACY_EXTRA_STORAGE" -threads "$DUPLICACY_THREADS"
-    log INFO 'Finished copying snapshots'
+# Run maintenance
+do_maintenance(){
+  # Prune first and upload to a secondary storage after
+  prune_backups
+  clone_snapshots
+
+  # Notify HealthChecks.io
+  if [[ -n "$HEALTHCHECKS_URL" ]]; then
+    curl --silent --output /dev/null --show-error --fail --retry 3 "$HEALTHCHECKS_URL"
   fi
 }
 
 # Clean-up and notify
-clean_up() {
-  if [[ -s "$DUPLICACY_PID_FILE" ]] && [[ ${1:-0} != 3 ]]; then
-    rm -f "$DUPLICACY_PID_FILE"
-  fi
-  if [[ ${1:-0} != 0 ]] && [[ ${1:-0} != 3 ]]; then
-    notify "Backup Failed on $(hostname) ($(date))"
-  fi
+clean_up(){
+  # Exit codes: 1 - Errors; 2 - Skipped; 3 - Already running
+  if [[ ${1:-0} == 3 ]]; then return; fi
+
+  if [[ -s "$DUPLICACY_PID_FILE" ]]; then rm -f "$DUPLICACY_PID_FILE"; fi
+
+  if [[ ${1:-0} != 0 ]]; then notify "Backup Failed on $(hostname) ($(date))"; fi
 }
 
 # Script
 main(){
+  # Initialize trap
   trap 'clean_up $?' EXIT HUP INT QUIT TERM
 
-  # Ensure that the repository is initialized
-  if [[ ! -s "${DUPLICACY_REPOSITORY_PATH}/.duplicacy/preferences" ]]; then
-    log ERROR 'The repository is not initialized'; exit 1
+  # Load dotenv
+  # shellcheck disable=1090
+  if [[ -s "$DUPLICACY_ENV_FILE" ]]; then
+    . "$DUPLICACY_ENV_FILE"
   fi
 
   # Log everything to file
   mkdir -p "$(dirname "$DUPLICACY_LOG_FILE")"
   exec > >(tee -a "$DUPLICACY_LOG_FILE") 2>&1
 
-  # Sanity checks
+  # Ensure that the repository is initialized
+  if [[ ! -s "${DUPLICACY_REPOSITORY_PATH}/.duplicacy/preferences" ]]; then
+    log ERROR 'The repository is not initialized'; exit 1
+  fi
+
+  # Run only one instance at a time
   check_process_running
   check_ssid
 
   # Wait for other processes
   wait_for_tmutil
 
-  # Backup
-  do_backup
-
-  # Prune first and upload to a secondary storage after
-  prune_backups
-  clone_snapshots
+  # Process command line arguments
+  local cmd
+  cmd="${1:-backup}"; shift
+  case "$cmd" in
+    backup)
+      # Backup
+      do_backup
+      ;;
+    maintenance)
+      # Maintenance
+      do_maintenance
+      ;;
+    *)
+      # Default
+      log ERROR "'${cmd}' is not recognized as a valid command"; exit 1
+      ;;
+  esac
 }
 
+# Run
 main "${@:-}"
