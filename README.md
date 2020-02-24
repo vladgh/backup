@@ -4,11 +4,19 @@
 
 Download latest release from <https://github.com/gilbertchen/duplicacy/releases> and add it to PATH
 
+Linux
+
 ```sh
-wget -O /usr/local/bin/duplicacy https://github.com/gilbertchen/duplicacy/releases/download/v2.3.0/duplicacy_osx_x64_2.3.0 && chmod +x /usr/local/bin/duplicacy
+sudo wget -O /usr/local/bin/duplicacy https://github.com/gilbertchen/duplicacy/releases/download/v2.3.0/duplicacy_linux_x64_2.3.0 && sudo chmod 755 /usr/local/bin/duplicacy
 ```
 
-For Windows
+MacOS
+
+```sh
+wget -O /usr/local/bin/duplicacy https://github.com/gilbertchen/duplicacy/releases/download/v2.3.0/duplicacy_osx_x64_2.3.0 && chmod 755 /usr/local/bin/duplicacy
+```
+
+Windows
 
 ```powershell
 # Requires Administrator rights
@@ -140,7 +148,7 @@ duplicacy init -encrypt MyID sftp://user@192.168.1.2//path/to/backup/storage
 Restore the wanted path from the wanted revision
 
 ```sh
-duplicacy -log restore -r 604-stats -- 'Dropbox/Projects/*'
+duplicacy -log restore -r 604 -stats 'Dropbox/Projects/*'
 ```
 
 Look for files, use the list command and grep
@@ -199,6 +207,13 @@ CONFIG
 
 This script needs Full Disk Access so we need to add `/usr/local/bin/bash` to Security & Privacy - Privacy - Full Disk Access (Use CMD+SHIFT+. to show hidden files in the Open file dialog).
 The .plist file should run with ProgramArguments, `bash` being the first one (or environment variables).
+
+### Linux Tail Logs
+
+```sh
+tail -f ~/.duplicacy/logs/backup.log
+grep -A 1 -e 'INFO BACKUP_END' ~/.duplicacy/logs/backup.log
+```
 
 ### PowerShell tail logs
 
