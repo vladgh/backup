@@ -20,7 +20,7 @@ export DUPLICACY_SSID="${DUPLICACY_SSID:-}"
 # Number of seconds to wait
 export DUPLICACY_TIMEOUT="${DUPLICACY_TIMEOUT:-300}"
 # Number of uploading threads
-export DUPLICACY_THREADS="${DUPLICACY_THREADS:-10}"
+export DUPLICACY_THREADS="${DUPLICACY_THREADS:-4}"
 # Extra storage (ex: B2)
 export DUPLICACY_EXTRA_STORAGE="${DUPLICACY_EXTRA_STORAGE:-}"
 # Set to 'true' to clone the snapshots to another storage
