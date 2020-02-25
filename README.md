@@ -26,22 +26,22 @@ Invoke-WebRequest -Uri "https://github.com/gilbertchen/duplicacy/releases/downlo
 ## Initialize the repository
 
 Pick the desired location for the .duplicacy folder, this will be your repository root. Defaults to your user's home.
+When you initialize the repository, it will ask for the encryption password and the path to the RSA key used by SFTP.
+
+```sh
+duplicacy init -encrypt MyID sftp://user@192.168.1.2//path/to/backup/storage
+```
+
 By default Duplicacy will follow the first-level symlinks (those under the root of the repository).
 Symlinks located under any subdirectories of the repository will be backed up as symlinks and will not be followed.
 
-For example, on Windows
+For example, on Windows:
 
 ```powershell
 mkdir C:\backup
 cd C:\backup
 cmd /c mklink /D myname C:\Users\myname
 cmd /c mklink /D docs D:\DOCs
-```
-
-When you initialize the repository, it will ask for the encryption password and the path to the RSA key used by SFTP
-
-```sh
-duplicacy init -encrypt MyID sftp://user@192.168.1.2//path/to/backup/storage
 ```
 
 ## Configure the repository
@@ -208,7 +208,7 @@ CONFIG
 This script needs Full Disk Access so we need to add `/usr/local/bin/bash` to Security & Privacy - Privacy - Full Disk Access (Use CMD+SHIFT+. to show hidden files in the Open file dialog).
 The .plist file should run with ProgramArguments, `bash` being the first one (or environment variables).
 
-### Linux Tail Logs
+### Linux tail Logs
 
 ```sh
 tail -f ~/.duplicacy/logs/backup.log
@@ -221,7 +221,7 @@ grep -A 1 -e 'INFO BACKUP_END' ~/.duplicacy/logs/backup.log
 Get-Content C:\backup\.duplicacy\logs\backup.log -Tail 20 -Wait
 ```
 
-### Powershell pattern in logs
+### PowerShell pattern in logs
 
 ```powershell
 # All
