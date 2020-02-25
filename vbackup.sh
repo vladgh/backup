@@ -45,13 +45,29 @@ is_cmd(){
   command -v "$@" >/dev/null 2>&1
 }
 
+# Load .env file
+load_dotenv(){
+  if [[ -s "$DUPLICACY_ENV_FILE" ]]; then
+    # shellcheck disable=1090
+    . "$DUPLICACY_ENV_FILE"
+  fi
+}
+
 # Post message to Slack webhook
 notify(){
   if [[ -n "$SLACK_ALERTS_WEBHOOK" ]]; then
+    log INFO 'Notify Slack'
     /usr/bin/curl --silent --output /dev/null --show-error --fail --request POST \
       --header 'Content-type: application/json' \
       --data "{\"text\":\"${1:?Must specify the message}\"}" \
       "$SLACK_ALERTS_WEBHOOK"
+  fi
+}
+
+# Ensure that the repository is initialized
+check_repository_initialized(){
+  if [[ ! -s "${DUPLICACY_REPOSITORY_PATH}/.duplicacy/preferences" ]]; then
+    log ERROR 'The repository is not initialized'; exit 1
   fi
 }
 
@@ -99,9 +115,35 @@ wait_for_tmutil(){
   fi
 }
 
+# Initialize script
+do_initialize(){
+  # Initialize trap
+  trap 'clean_up $?' EXIT HUP INT QUIT TERM
+
+  # Load settings
+  load_dotenv
+
+  # Log everything to file
+  mkdir -p "$(dirname "$DUPLICACY_LOG_FILE")"
+  exec > >(tee -a "$DUPLICACY_LOG_FILE") 2>&1
+
+  # Sanity checks
+  check_repository_initialized
+  check_process_running
+  check_ssid
+
+  # Wait for other processes
+  wait_for_tmutil
+}
+
 # Run backup (use caffeinate command if it exists to prevent sleeping on MacOS)
 do_backup(){
+  # Initialize script
+  do_initialize
+
+  # Run
   cd "$DUPLICACY_REPOSITORY_PATH" || exit 1
+  log INFO 'Start backup'
   if is_cmd caffeinate; then
     caffeinate -s duplicacy -log backup -stats -vss
   else
@@ -117,21 +159,24 @@ prune_backups(){
   # Keep 1 snapshot every 30 days if older than 180 days
   # Keep 1 snapshot every 7 days if older than 30 days
   # Keep 1 snapshot every 1 day if older than 7 days
+  log INFO 'Prune local snapshots'
   duplicacy -log prune -all -keep 0:1825 -keep 30:180 -keep 7:30 -keep 1:7
-  log INFO 'Finished pruning local snapshots'
-  duplicacy -log prune -all -keep 0:1825 -keep 30:180 -keep 7:30 -keep 1:7 -storage B2
-  log INFO 'Finished pruning remote snapshots'
+  log INFO 'Prune remote snapshots'
+  duplicacy -log prune -all -keep 0:1825 -keep 30:180 -keep 7:30 -keep 1:7 -storage "$DUPLICACY_EXTRA_STORAGE"
 }
 
 # Clone snapshots
 clone_snapshots(){
   cd "$DUPLICACY_REPOSITORY_PATH" || exit 1
-  duplicacy -log copy -to B2 -threads 4
-  log INFO 'Finished copying snapshots'
+  log INFO 'Clone snapshots'
+  duplicacy -log copy -to "$DUPLICACY_EXTRA_STORAGE" -threads "$DUPLICACY_THREADS"
 }
 
 # Run maintenance
 do_maintenance(){
+  # Initialize script
+  do_initialize
+
   # Prune first and upload to a secondary storage after
   prune_backups
   clone_snapshots
@@ -154,31 +199,6 @@ clean_up(){
 
 # Script
 main(){
-  # Initialize trap
-  trap 'clean_up $?' EXIT HUP INT QUIT TERM
-
-  # Load dotenv
-  # shellcheck disable=1090
-  if [[ -s "$DUPLICACY_ENV_FILE" ]]; then
-    . "$DUPLICACY_ENV_FILE"
-  fi
-
-  # Log everything to file
-  mkdir -p "$(dirname "$DUPLICACY_LOG_FILE")"
-  exec > >(tee -a "$DUPLICACY_LOG_FILE") 2>&1
-
-  # Ensure that the repository is initialized
-  if [[ ! -s "${DUPLICACY_REPOSITORY_PATH}/.duplicacy/preferences" ]]; then
-    log ERROR 'The repository is not initialized'; exit 1
-  fi
-
-  # Run only one instance at a time
-  check_process_running
-  check_ssid
-
-  # Wait for other processes
-  wait_for_tmutil
-
   # Process command line arguments
   local cmd
   cmd="${1:-backup}"; shift
