@@ -18,5 +18,6 @@ e:(?i)/\.terraform/
 e:(?i)/node_modules/
 e:(?i)\.(git|svn|hg)/.*$
 e:(?i)\.gnupg/S\..*$
+e:(?i)\.ssh/control-.*$
 e:(?i)\.sqlite-.*$
 e:(?i)\.vsliveshare/vsls-launcher$
