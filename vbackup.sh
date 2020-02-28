@@ -190,10 +190,16 @@ do_maintenance(){
 # Clean-up and notify
 clean_up(){
   # Exit codes: 1 - Errors; 2 - Skipped; 3 - Already running
+  # If it's already running, just clean exit directly
   if [[ ${1:-0} == 3 ]]; then return; fi
 
+  # Remove the PID file
   if [[ -s "$DUPLICACY_PID_FILE" ]]; then rm -f "$DUPLICACY_PID_FILE"; fi
 
+  # If it's skipped, just clean exit (after cleaning the PID file)
+  if [[ ${1:-0} == 2 ]]; then return; fi
+
+  # For all other cases notify failure (after cleaning the PID file)
   if [[ ${1:-0} != 0 ]]; then notify "Backup Failed on $(hostname) ($(date))"; fi
 }
 
