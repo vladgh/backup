@@ -35,9 +35,18 @@ export HEALTHCHECKS_URL="${HEALTHCHECKS_URL:-}"
 export PATH="${PATH}:/bin:/sbin:/usr/bin:/usr/local/bin:/usr/local/opt/coreutils/libexec/gnubin"
 
 # Log format (ex: log INFO Message)
+# Logs WARN and ERROR messages to STDERR
+# Levels: DEBUG, INFO, WARN, ERROR
 log(){
   local type=${1:?Must specify the type first}; shift
-  echo "$(date '+%Y-%m-%d %H:%M:%S.%3N') ${type} DUPLICACY_SCRIPT ${*:-}"
+  case "$type" in
+    WARN,ERROR)
+      echo "$(date '+%Y-%m-%d %H:%M:%S.%3N') ${type} DUPLICACY_SCRIPT ${*:-}" >&2
+      ;;
+    *)
+      echo "$(date '+%Y-%m-%d %H:%M:%S.%3N') ${type} DUPLICACY_SCRIPT ${*:-}"
+      ;;
+  esac
 }
 
 # Check if command exists
