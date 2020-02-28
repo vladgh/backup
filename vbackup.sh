@@ -41,10 +41,10 @@ log(){
   local type=${1:?Must specify the type first}; shift
   case "$type" in
     WARN,ERROR)
-      echo "$(date '+%Y-%m-%d %H:%M:%S.%3N') ${type} DUPLICACY_SCRIPT ${*:-}" >&2
+      echo "$(date '+%Y-%m-%d %H:%M:%S.%3N') ${type} DUPLICACY_SCRIPT ${*:-}" >/dev/stderr
       ;;
     *)
-      echo "$(date '+%Y-%m-%d %H:%M:%S.%3N') ${type} DUPLICACY_SCRIPT ${*:-}"
+      echo "$(date '+%Y-%m-%d %H:%M:%S.%3N') ${type} DUPLICACY_SCRIPT ${*:-}" >/dev/stdout
       ;;
   esac
 }
