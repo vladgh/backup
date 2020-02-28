@@ -200,7 +200,10 @@ clean_up(){
   if [[ ${1:-0} == 2 ]]; then return; fi
 
   # For all other cases notify failure (after cleaning the PID file)
-  if [[ ${1:-0} != 0 ]]; then notify "Backup Failed on $(hostname) ($(date))"; fi
+  if [[ ${1:-0} != 0 ]]; then
+    log ERROR "Backup Failed with exit code '${1}'"
+    notify "Backup Failed on $(hostname) ($(date))"
+  fi
 }
 
 # Script
