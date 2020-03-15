@@ -12,6 +12,7 @@ e:(?i).*\.rnd$
 e:(?i).*/Google/Chrome/.*cache.*
 e:(?i).*/Google/Chrome/Safe Browsing.*
 e:(?i).*/Mozilla/Firefox/.*cache.*
+e:(?i).*\.(gsheet|gdoc|gform|gdraw)$
 
 # Libraries
 e:(?i)iTunes/Album Artwork/Cache/
