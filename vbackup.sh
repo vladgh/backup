@@ -23,10 +23,6 @@ export DUPLICACY_TIMEOUT="${DUPLICACY_TIMEOUT:-300}"
 export DUPLICACY_THREADS="${DUPLICACY_THREADS:-4}"
 # Extra storage (ex: B2)
 export DUPLICACY_EXTRA_STORAGE="${DUPLICACY_EXTRA_STORAGE:-}"
-# Set to 'true' to clone the snapshots to another storage
-export DUPLICACY_CLONE_BACKUPS="${DUPLICACY_CLONE_BACKUPS:-false}"
-# Set to 'true' to prune the backups
-export DUPLICACY_PRUNE_BACKUPS="${DUPLICACY_PRUNE_BACKUPS:-false}"
 # The Slack webhook used for posting messages
 export SLACK_ALERTS_WEBHOOK="${SLACK_ALERTS_WEBHOOK:-}"
 # The webhook used for healthchecks (HealthChecks.io)
@@ -137,19 +133,33 @@ do_initialize(){
   wait_for_tmutil
 }
 
+# Concatenate command
+concatenate_duplicacy_cmd(){
+  duplicacy_cmd='duplicacy -log backup -stats'
+
+  # Use `caffeinate` command if available
+  if is_cmd caffeinate; then
+    duplicacy_cmd="caffeinate -s ${duplicacy_cmd}"
+  fi
+
+  # Enable the Volume Shadow Copy service
+  if [[ "$DUPLICACY_VSS" == 'true' ]]; then
+    duplicacy_cmd="${duplicacy_cmd} -vss"
+  fi
+}
+
 # Run backup (use caffeinate command if it exists to prevent sleeping on MacOS)
 do_backup(){
   # Initialize script
   do_initialize
 
+  # Concatenate command
+  concatenate_duplicacy_cmd
+
   # Run
   cd "$DUPLICACY_REPOSITORY_PATH" || exit 1
   log INFO 'Start backup'
-  if is_cmd caffeinate; then
-    caffeinate -s duplicacy -log backup -stats -vss
-  else
-    duplicacy -log backup -stats
-  fi
+  eval "${duplicacy_cmd:-}"
 }
 
 # Prune backups
