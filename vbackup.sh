@@ -220,8 +220,7 @@ clean_up(){
 # Script
 main(){
   # Process command line arguments
-  local cmd
-  cmd="${1:-backup}"; shift
+  local -r cmd="${1:-backup}"; shift
   case "$cmd" in
     backup)
       # Backup
