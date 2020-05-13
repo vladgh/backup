@@ -196,6 +196,8 @@ do_maintenance(){
   if [[ -n "$HEALTHCHECKS_URL" ]]; then
     curl --silent --output /dev/null --show-error --fail --retry 3 "$HEALTHCHECKS_URL"
   fi
+
+  log INFO 'Maintenance completed'
 }
 
 # Clean-up and notify
