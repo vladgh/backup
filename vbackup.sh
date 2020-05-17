@@ -157,14 +157,12 @@ do_backup(){
   concatenate_duplicacy_cmd
 
   # Run
-  cd "$DUPLICACY_REPOSITORY_PATH" || exit 1
   log INFO 'Start backup'
   eval "${duplicacy_cmd:-}"
 }
 
 # Prune backups
 prune_backups(){
-  cd "$DUPLICACY_REPOSITORY_PATH" || exit 1
   # -keep <n:m> [+]   keep 1 snapshot every n days for snapshots older than m days
   # Keep no snapshots older than 1825 days
   # Keep 1 snapshot every 30 days if older than 180 days
@@ -172,15 +170,19 @@ prune_backups(){
   # Keep 1 snapshot every 1 day if older than 7 days
   log INFO 'Prune local snapshots'
   duplicacy -log prune -all -keep 0:1825 -keep 30:180 -keep 7:30 -keep 1:7
-  log INFO 'Prune remote snapshots'
-  duplicacy -log prune -all -keep 0:1825 -keep 30:180 -keep 7:30 -keep 1:7 -storage "$DUPLICACY_EXTRA_STORAGE"
+
+  if [[ -n "$DUPLICACY_EXTRA_STORAGE" ]]; then
+    log INFO 'Prune remote snapshots'
+    duplicacy -log prune -all -keep 0:1825 -keep 30:180 -keep 7:30 -keep 1:7 -storage "$DUPLICACY_EXTRA_STORAGE"
+  fi
 }
 
-# Clone snapshots
-clone_snapshots(){
-  cd "$DUPLICACY_REPOSITORY_PATH" || exit 1
-  log INFO 'Clone snapshots'
-  duplicacy -log copy -to "$DUPLICACY_EXTRA_STORAGE" -threads "$DUPLICACY_THREADS"
+# Copy to external storage
+copy_backups(){
+  if [[ -n "$DUPLICACY_EXTRA_STORAGE" ]]; then
+    log INFO 'Clone snapshots'
+    duplicacy -log copy -to "$DUPLICACY_EXTRA_STORAGE" -threads "$DUPLICACY_THREADS"
+  fi
 }
 
 # Run maintenance
@@ -188,9 +190,11 @@ do_maintenance(){
   # Initialize script
   do_initialize
 
-  # Prune first and upload to a secondary storage after
+  # Upload to a secondary storage
+  copy_backups
+
+  # Prune storage
   prune_backups
-  clone_snapshots
 
   # Notify HealthChecks.io
   if [[ -n "$HEALTHCHECKS_URL" ]]; then
@@ -223,6 +227,10 @@ clean_up(){
 main(){
   # Process command line arguments
   local -r cmd="${1:-backup}"; shift
+
+  # Go to the repository path
+  cd "$DUPLICACY_REPOSITORY_PATH" || exit 1
+
   case "$cmd" in
     backup)
       # Backup
