@@ -9,10 +9,6 @@ IFS=$'\n\t'
 export DUPLICACY_REPOSITORY_PATH="${DUPLICACY_REPOSITORY_PATH:-$HOME}"
 # The path to the dotenv file for this script
 export DUPLICACY_ENV_FILE="${DUPLICACY_ENV_FILE:-${DUPLICACY_REPOSITORY_PATH}/.duplicacy/.env}"
-# The path to the log file for this script
-export DUPLICACY_LOG_FILE="${DUPLICACY_LOG_FILE:-${DUPLICACY_REPOSITORY_PATH}/.duplicacy/logs/backup.log}"
-# The path to the file containing the pid of the running process
-export DUPLICACY_PID_FILE="${DUPLICACY_PID_FILE:-${DUPLICACY_REPOSITORY_PATH}/.duplicacy/running.pid}"
 # Set to 'true' to enable the Volume Shadow Copy service (Windows and macOS using APFS only)
 export DUPLICACY_VSS="${DUPLICACY_VSS:-false}"
 # Execute the script only when connected to the specified Wi-Fi SSID
@@ -150,6 +146,11 @@ concatenate_duplicacy_cmd(){
 
 # Run backup (use caffeinate command if it exists to prevent sleeping on MacOS)
 do_backup(){
+  # The path to the log file for this script
+  export DUPLICACY_LOG_FILE="${DUPLICACY_REPOSITORY_PATH}/.duplicacy/logs/backup.log"
+  # The path to the file containing the pid of the running process
+  export DUPLICACY_PID_FILE="${DUPLICACY_REPOSITORY_PATH}/.duplicacy/running.pid"
+
   # Initialize script
   do_initialize
 
@@ -187,21 +188,26 @@ copy_backups(){
 
 # Run maintenance
 do_maintenance(){
+  # The path to the log file for this script
+  export DUPLICACY_LOG_FILE="${DUPLICACY_REPOSITORY_PATH}/.duplicacy/logs/maintenance.log"
+  # The path to the file containing the pid of the running process
+  export DUPLICACY_PID_FILE="${DUPLICACY_REPOSITORY_PATH}/.duplicacy/running-maintenance.pid"
+
   # Initialize script
   do_initialize
 
-  # Upload to a secondary storage
-  copy_backups
-
   # Prune storage
   prune_backups
+
+  # Upload to a secondary storage
+  copy_backups
 
   # Notify HealthChecks.io
   if [[ -n "$HEALTHCHECKS_URL" ]]; then
     curl --silent --output /dev/null --show-error --fail --retry 3 "$HEALTHCHECKS_URL"
   fi
 
-  log INFO 'Maintenance completed'
+  log INFO 'MAINTENANCE_END'
 }
 
 # Clean-up and notify
