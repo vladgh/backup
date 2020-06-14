@@ -1,5 +1,7 @@
 # Vlad's Duplicacy Backup Scripts
 
+![Build Status](https://github.com/vladgh/backup/workflows/CI/badge.svg)
+
 ## Install Duplicacy
 
 Download latest release from <https://github.com/gilbertchen/duplicacy/releases> and add it to PATH
