@@ -1,26 +1,26 @@
-# Vlad's Backup
+# Vlad's Duplicacy Backup Scripts
 
-## Install
+## Install Duplicacy
 
 Download latest release from <https://github.com/gilbertchen/duplicacy/releases> and add it to PATH
 
 Linux
 
 ```sh
-sudo wget -O /usr/local/bin/duplicacy https://github.com/gilbertchen/duplicacy/releases/download/v2.4.1/duplicacy_linux_x64_2.4.1 && sudo chmod 755 /usr/local/bin/duplicacy
+sudo wget -O /usr/local/bin/duplicacy https://github.com/gilbertchen/duplicacy/releases/download/v2.5.2/duplicacy_linux_x64_2.5.2 && sudo chmod 755 /usr/local/bin/duplicacy
 ```
 
 MacOS
 
 ```sh
-wget -O /usr/local/bin/duplicacy https://github.com/gilbertchen/duplicacy/releases/download/v2.4.1/duplicacy_osx_x64_2.4.1 && chmod 755 /usr/local/bin/duplicacy
+wget -O /usr/local/bin/duplicacy https://github.com/gilbertchen/duplicacy/releases/download/v2.5.2/duplicacy_osx_x64_2.5.2 && chmod 755 /usr/local/bin/duplicacy
 ```
 
 Windows
 
 ```powershell
 # Requires Administrator rights
-Invoke-WebRequest -Uri "https://github.com/gilbertchen/duplicacy/releases/download/v2.4.1/duplicacy_win_x64_2.4.1.exe" -OutFile "C:\Windows\System32\duplicacy.exe"
+Invoke-WebRequest -Uri "https://github.com/gilbertchen/duplicacy/releases/download/v2.5.2/duplicacy_win_x64_2.5.2.exe" -OutFile "C:\Windows\System32\duplicacy.exe"
 ```
 
 ## Initialize the repository
@@ -265,3 +265,14 @@ Prune (run only from the NAS for both storages)
 duplicacy -log prune -all -keep 0:1825 -keep 30:180 -keep 7:30 -keep 1:7
 duplicacy -log prune -all -keep 0:1825 -keep 30:180 -keep 7:30 -keep 1:7 -storage B2
 ```
+
+## Contribute
+
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg)](code_of_conduct.md)
+
+Contributions are always welcome! Please read the [contribution guidelines](.github/CONTRIBUTING.md) and the [code of conduct](.github/CODE_OF_CONDUCT.md).
+
+## License
+
+Licensed under the Apache License, Version 2.0.
+See [LICENSE](LICENSE) file.
