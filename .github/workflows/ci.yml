@@ -1,0 +1,21 @@
+name: CI
+
+on: push
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    env:
+      SC_VERSION: stable
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install Shellcheck
+      run: |
+            wget "https://github.com/koalaman/shellcheck/releases/download/${SC_VERSION?}/shellcheck-${SC_VERSION?}.linux.x86_64.tar.xz"
+            wget "https://storage.googleapis.com/shellcheck/shellcheck-${SC_VERSION}.linux.x86_64.tar.xz"
+            tar --xz -xvf "shellcheck-${SC_VERSION}.linux.x86_64.tar.xz"
+            shellcheck() { "shellcheck-${SC_VERSION}/shellcheck" "$@"; }
+            shellcheck --version
+    - name: Check shell scripts
+      run: find . -type f -name '*.sh' -exec shellcheck {} +
