@@ -56,13 +56,13 @@ duplicacy set -storage default -key ssh_key_file -value '/path/to/.ssh/duplicacy
 Place the appropriate filters file inside the `.duplicacy` folder
 
 ```sh
-wget -O ~/.duplicacy/filters https://github.com/vladgh/backup/raw/master/filters_osx
+wget -O ~/.duplicacy/filters https://github.com/vladgh/backup/raw/master/filters/osx
 ```
 
 For Windows
 
 ```powershell
-Invoke-WebRequest -Uri "https://github.com/vladgh/backup/raw/master/filters_pc" -OutFile "C:\backup\.duplicacy\filters"
+Invoke-WebRequest -Uri "https://github.com/vladgh/backup/raw/master/filters/windows" -OutFile "C:\backup\.duplicacy\filters"
 ```
 
 ## Backup
@@ -80,11 +80,41 @@ wget -O /usr/local/bin/vbackup.sh https://github.com/vladgh/backup/raw/master/vb
 chmod +x /usr/local/bin/vbackup.sh
 ```
 
-Update the paths and settings in the sample .plist launch script , copy it to ~/Library/LaunchAgents and load it (-w enables it at the next boot)
+Update the paths and settings in the sample .plist launch script below, copy it to ~/Library/LaunchAgents and load it (-w enables it at the next boot)
 
 ```sh
-wget -O ~/Library/LaunchAgents/duplicacy.plist https://github.com/vladgh/backup/raw/master/duplicacy.plist
-# Update the PATH and environment variables!!!
+# Install launch agent
+tee ~/Library/LaunchAgents/duplicacy.plist << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key>
+    <string>duplicacy.startup</string>
+    <key>ProgramArguments</key>
+    <array>
+      <string>/usr/local/bin/bash</string>
+      <string>/Users/vlad/.duplicacy/vbackup</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>UserName</key>
+    <string>vlad</string>
+    <key>GroupName</key>
+    <string>staff</string>
+    <key>WorkingDirectory</key>
+    <string>/Users/vlad</string>
+    <key>StandardErrorPath</key>
+    <string>/dev/null</string>
+    <key>StandardOutPath</key>
+    <string>/dev/null</string>
+    <key>StartInterval</key>
+    <integer>3600</integer>
+  </dict>
+</plist>
+EOF
+
+# Load/Unload agent
 launchctl load -w ~/Library/LaunchAgents/duplicacy.plist
 ```
 
@@ -102,7 +132,63 @@ Download the Windows backup script `vbackup.ps1`
 Invoke-WebRequest -Uri "https://github.com/vladgh/backup/raw/master/vbackup.ps1" -OutFile "C:\backup\vbackup.ps1"
 ```
 
-Download the sample duplicacy.xml and import it into the Task Scheduler to run the powershell script at some interval with elevated privileges. Modify as needed!
+Import the sample xml below into the Task Scheduler to run the powershell script at some interval with elevated privileges. Modify as needed!
+
+```xml
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.3" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Author>MyPC\MyName</Author>
+    <URI>\DuplicacyBackup</URI>
+  </RegistrationInfo>
+  <Triggers>
+    <TimeTrigger>
+      <Repetition>
+        <Interval>PT1H</Interval>
+        <Duration>P10000D</Duration>
+        <StopAtDurationEnd>true</StopAtDurationEnd>
+      </Repetition>
+      <StartBoundary>2019-05-02T06:00:00+02:00</StartBoundary>
+      <Enabled>true</Enabled>
+      <RandomDelay>PT5M</RandomDelay>
+    </TimeTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <UserId>MyPC\MyName</UserId>
+      <LogonType>Password</LogonType>
+      <RunLevel>HighestAvailable</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>true</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <StartWhenAvailable>true</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
+    <IdleSettings>
+      <StopOnIdleEnd>true</StopOnIdleEnd>
+      <RestartOnIdle>false</RestartOnIdle>
+    </IdleSettings>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <Enabled>true</Enabled>
+    <Hidden>false</Hidden>
+    <RunOnlyIfIdle>false</RunOnlyIfIdle>
+    <DisallowStartOnRemoteAppSession>false</DisallowStartOnRemoteAppSession>
+    <UseUnifiedSchedulingEngine>true</UseUnifiedSchedulingEngine>
+    <WakeToRun>false</WakeToRun>
+    <ExecutionTimeLimit>PT72H</ExecutionTimeLimit>
+    <Priority>7</Priority>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>powershell.exe</Command>
+      <Arguments>-NoProfile -ExecutionPolicy Bypass -File "C:\backup\vbackup.ps1" -Verb RunAs; quit</Arguments>
+    </Exec>
+  </Actions>
+</Task>
+```
 
 Manually trigger scheduled task
 
@@ -119,7 +205,37 @@ sudo wget -O /usr/local/bin/vbackup.sh https://github.com/vladgh/backup/raw/mast
 sudo chmod +x /usr/local/bin/vbackup.sh
 ```
 
-Create a cronjob to run the script as your user, at some interval
+Use SystemD timers to trigger the backup service
+
+```sh
+tee ~/.config/systemd/user/vbackup.service << 'EOF'
+[Unit]
+Description=Run VBackup
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.duplicacy/vbackup
+EOF
+
+tee /home/vlad/.config/systemd/user/vbackup.timer  << 'EOF'
+[Unit]
+Description=Run VBackup
+
+[Timer]
+OnCalendar=*:12:34
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+
+systemctl --user --now enable vbackup.timer
+systemctl --user list-timers --all
+```
+
+Alternatively, create a cronjob to run the script as your user, at some interval
 
 ```sh
 sudo tee /etc/cron.d/vbackup << CONFIG
@@ -167,13 +283,29 @@ duplicacy list -r 12 -files | Select-String -Pattern myFile
 duplicacy list -r 1-100 -files | Select-String -Pattern myFile
 ```
 
+## Restore local default storage from remote
+
+```sh
+# With B2 configured in preferences, copy from B2 to default, with bit-identical and set the id and path
+duplicacy add -e -copy B2 -bit-identical default MyID /path/to/backup/storage
+```
+
 ## Fix corrupted snapshot
 
 Make sure no other backups are running and delete the corrupted snapshot
 
 ```sh
-duplicacy check -a -tabular
-duplicacy prune -exhaustive -exclusive -id VAlien -r 1293
+duplicacy check -a -tabular  # Check all snapshots (this is better than individual id checks, because of deduplication, when the corrupted chunks could belong to different IDs)
+duplicacy check -tabular -id VDev -r 1510-1520  # OR check a range of snapshots
+duplicacy check -tabular -storage B2 -id VDev -r 1510-1520  # OR check a range of snapshots for a single ID on a remote storage
+
+duplicacy prune -exhaustive -exclusive -id VDev -r 1515  # Remove the corrupted snapshot
+
+# IF `duplicacy check -a -tabular` fails with:
+# All chunks referenced by snapshot VDev at revision 5114 exist
+# Chunk cc86bc8351524fa2d17f65abd38b8609489a20410370965291de881b21b15226 can't be found
+# Go and delete the `snapshots/VDev/5115` file
+# Then run `duplicacy prune -exhaustive -exclusive`
 ```
 
 ---
@@ -234,6 +366,8 @@ Get-Content C:\backup\.duplicacy\logs\backup.log -Tail 1000 | Select-String -Pat
 
 ### Mount backup drive, and save credentials on Windows
 
+In Windows 10, the credentials need to include the workgroup (ex: WORKGROUP\myname)
+
 ```powershell
 net use Z: \\192.168.1.2\PathToBackup /savecred /persistent:yes
 ```
@@ -243,7 +377,7 @@ net use Z: \\192.168.1.2\PathToBackup /savecred /persistent:yes
 Create a duplicate encrypted storage on Backblaze B2
 
 ```sh
-duplicacy add -encrypt -copy default -bit-identical B2 Backblaze b2://vladgh
+duplicacy add -encrypt -copy default -bit-identical B2 MyID b2://vladgh
 ```
 
 Add keys and passwords to preferences
