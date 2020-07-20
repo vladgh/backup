@@ -20,3 +20,4 @@ e:(?i)\.(git|svn|hg)/.*$
 e:(?i)\.gnupg/S\..*$
 e:(?i)\.sqlite-.*$
 e:(?i)\.vsliveshare/vsls-launcher$
+e:(?i)\.vscode-server/.*$
