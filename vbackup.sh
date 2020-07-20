@@ -6,7 +6,7 @@ IFS=$'\n\t'
 
 # DEFAULTS
 # The path to the source files
-export DUPLICACY_REPOSITORY_PATH="${DUPLICACY_REPOSITORY_PATH:-$HOME}"
+export DUPLICACY_REPOSITORY_PATH="${DUPLICACY_REPOSITORY_PATH:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)}"
 # The path to the dotenv file for this script
 export DUPLICACY_ENV_FILE="${DUPLICACY_ENV_FILE:-${DUPLICACY_REPOSITORY_PATH}/.duplicacy/.env}"
 # Set to 'true' to enable the Volume Shadow Copy service (Windows and macOS using APFS only)
@@ -94,8 +94,7 @@ check_ssid(){
   fi
 }
 
-# This is here because of tmutil timeout errors (`tmutil localsnaphost` is
-# used for VSS - Shadow Copy)
+# This is here because of tmutil timeout errors (`tmutil localsnapshot` is used for VSS - Shadow Copy)
 wait_for_tmutil(){
   if ! is_cmd tmutil; then return; fi
 
@@ -142,6 +141,11 @@ concatenate_duplicacy_cmd(){
   if [[ "$DUPLICACY_VSS" == 'true' ]]; then
     duplicacy_cmd="${duplicacy_cmd} -vss"
   fi
+
+  # Use the specified extra storage
+  if [[ -n "$DUPLICACY_EXTRA_STORAGE" ]]; then
+    duplicacy_cmd="${duplicacy_cmd} -storage ${DUPLICACY_EXTRA_STORAGE}"
+  fi
 }
 
 # Run backup (use caffeinate command if it exists to prevent sleeping on MacOS)
@@ -162,27 +166,30 @@ do_backup(){
   eval "${duplicacy_cmd:-}"
 }
 
-# Prune backups
-prune_backups(){
+# Prune local storage
+prune_local_snapshots(){
   # -keep <n:m> [+]   keep 1 snapshot every n days for snapshots older than m days
   # Keep no snapshots older than 1825 days
   # Keep 1 snapshot every 30 days if older than 180 days
   # Keep 1 snapshot every 7 days if older than 30 days
   # Keep 1 snapshot every 1 day if older than 7 days
   log INFO 'Prune local snapshots'
-  duplicacy -log prune -all -keep 0:1825 -keep 30:180 -keep 7:30 -keep 1:7
+  duplicacy -log prune -all -keep 0:1825 -keep 30:180 -keep 7:30 -keep 1:7 || notify "Prune local snapshots failed with exit code '$?'. Skipping..."
+}
 
+# Prune remote storage
+prune_remote_snapshots(){
   if [[ -n "$DUPLICACY_EXTRA_STORAGE" ]]; then
     log INFO 'Prune remote snapshots'
-    duplicacy -log prune -all -keep 0:1825 -keep 30:180 -keep 7:30 -keep 1:7 -storage "$DUPLICACY_EXTRA_STORAGE"
+    duplicacy -log prune -all -keep 0:1825 -keep 30:180 -keep 7:30 -keep 1:7 -storage "$DUPLICACY_EXTRA_STORAGE" || notify "Prune remote snapshots failed with exit code '$?'. Skipping..."
   fi
 }
 
 # Copy to external storage
-copy_backups(){
+copy_snapshots(){
   if [[ -n "$DUPLICACY_EXTRA_STORAGE" ]]; then
-    log INFO 'Clone snapshots'
-    duplicacy -log copy -to "$DUPLICACY_EXTRA_STORAGE" -threads "$DUPLICACY_THREADS"
+    log INFO 'Copy snapshots'
+    duplicacy -log copy -to "$DUPLICACY_EXTRA_STORAGE" -threads "$DUPLICACY_THREADS" || notify "Copy snapshots failed with exit code '$?'. Skipping..."
   fi
 }
 
@@ -196,11 +203,14 @@ do_maintenance(){
   # Initialize script
   do_initialize
 
-  # Prune storage
-  prune_backups
+  # Copy to external storage
+  copy_snapshots
 
-  # Upload to a secondary storage
-  copy_backups
+  # Prune local storage
+  prune_local_snapshots
+
+  # Prune remote storage
+  prune_remote_snapshots
 
   # Notify HealthChecks.io
   if [[ -n "$HEALTHCHECKS_URL" ]]; then
