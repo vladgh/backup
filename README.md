@@ -76,8 +76,17 @@ duplicacy -log backup -stats -vss
 Download the OSX/Linux backup script `vbackup.sh`, add it to PATH and make it executable
 
 ```sh
-wget -O /usr/local/bin/vbackup.sh https://github.com/vladgh/backup/raw/master/vbackup.sh
-chmod +x /usr/local/bin/vbackup.sh
+wget -O /usr/local/bin/vbackup https://github.com/vladgh/backup/raw/master/vbackup.sh
+chmod a+x /usr/local/bin/vbackup
+```
+
+Use a dotenv file for secrets and other settings
+
+```sh
+tee ~/.duplicacy/.env << CONFIG
+SLACK_ALERTS_WEBHOOK='https://hooks.slack.com/services/xxxxxxxxxx'
+CONFIG
+chmod 600 ~/.duplicacy/.env
 ```
 
 Update the paths and settings in the sample .plist launch script below, copy it to ~/Library/LaunchAgents and load it (-w enables it at the next boot)
@@ -94,7 +103,7 @@ tee ~/Library/LaunchAgents/duplicacy.plist << 'EOF'
     <key>ProgramArguments</key>
     <array>
       <string>/usr/local/bin/bash</string>
-      <string>/Users/vlad/.duplicacy/vbackup</string>
+      <string>/usr/local/bin/vbackup</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
@@ -122,6 +131,63 @@ Restart with
 
 ```sh
 launchctl unload -w ~/Library/LaunchAgents/duplicacy.plist && launchctl load -w ~/Library/LaunchAgents/duplicacy.plist
+```
+
+## VBackup Script Linux
+
+Download the OSX/Linux backup script `vbackup.sh`, add it to PATH and make it executable
+
+```sh
+sudo wget -O /usr/local/bin/vbackup https://github.com/vladgh/backup/raw/master/vbackup.sh
+sudo chmod a+x /usr/local/bin/vbackup
+```
+
+Use a dotenv file for secrets and other settings
+
+```sh
+tee ~/.duplicacy/.env << CONFIG
+SLACK_ALERTS_WEBHOOK='https://hooks.slack.com/services/xxxxxxxxxx'
+CONFIG
+chmod 600 ~/.duplicacy/.env
+```
+
+Use SystemD timers to trigger the backup service
+
+```sh
+tee ~/.config/systemd/user/vbackup.service << 'EOF'
+[Unit]
+Description=Run VBackup
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h
+ExecStart=/usr/local/bin/vbackup
+EOF
+
+tee /home/vlad/.config/systemd/user/vbackup.timer  << 'EOF'
+[Unit]
+Description=Run VBackup
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=60min
+
+[Install]
+WantedBy=timers.target
+EOF
+
+systemctl --user --now enable vbackup.timer
+systemctl --user list-timers --all
+```
+
+Alternatively, create a cronjob to run the script as your user, at some interval
+
+```sh
+sudo tee /etc/cron.d/vbackup << CONFIG
+10 * * * * vlad /usr/local/bin/vbackup.sh >/dev/null 2>&1
+CONFIG
 ```
 
 ## VBackup Script Windows
@@ -194,56 +260,6 @@ Manually trigger scheduled task
 
 ```powershell
 Start-ScheduledTask -TaskName "DuplicacyBackup"
-```
-
-## VBackup Script Linux
-
-Download the OSX/Linux backup script `vbackup.sh`, add it to PATH and make it executable
-
-```sh
-sudo wget -O /usr/local/bin/vbackup.sh https://github.com/vladgh/backup/raw/master/vbackup.sh
-sudo chmod +x /usr/local/bin/vbackup.sh
-```
-
-Use SystemD timers to trigger the backup service
-
-```sh
-tee ~/.config/systemd/user/vbackup.service << 'EOF'
-[Unit]
-Description=Run VBackup
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=oneshot
-ExecStart=%h/.duplicacy/vbackup
-EOF
-
-tee /home/vlad/.config/systemd/user/vbackup.timer  << 'EOF'
-[Unit]
-Description=Run VBackup
-
-[Timer]
-OnCalendar=*:12:34
-Persistent=true
-
-[Install]
-WantedBy=timers.target
-EOF
-
-systemctl --user --now enable vbackup.timer
-systemctl --user list-timers --all
-```
-
-Alternatively, create a cronjob to run the script as your user, at some interval
-
-```sh
-sudo tee /etc/cron.d/vbackup << CONFIG
-DUPLICACY_REPOSITORY_PATH='/home/vlad'
-SLACK_ALERTS_WEBHOOK='https://hooks.slack.com/services/xxxxxxxxxx'
-10 * * * * vlad /usr/local/bin/vbackup.sh >/dev/null 2>&1
-CONFIG
-sudo chmod 600 /etc/cron.d/vbackup
 ```
 
 ---
