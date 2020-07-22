@@ -6,7 +6,7 @@ IFS=$'\n\t'
 
 # DEFAULTS
 # The path to the source files
-export DUPLICACY_REPOSITORY_PATH="${DUPLICACY_REPOSITORY_PATH:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)}"
+export DUPLICACY_REPOSITORY_PATH="${DUPLICACY_REPOSITORY_PATH:-$(pwd -P)}"
 # The path to the dotenv file for this script
 export DUPLICACY_ENV_FILE="${DUPLICACY_ENV_FILE:-${DUPLICACY_REPOSITORY_PATH}/.duplicacy/.env}"
 # Set to 'true' to enable the Volume Shadow Copy service (Windows and macOS using APFS only)
